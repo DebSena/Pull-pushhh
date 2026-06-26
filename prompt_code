@@ -1,0 +1,29 @@
+response = client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=8192,
+    system=SYSTEM_PROMPT,
+    messages=[
+        {
+            "role": "user",
+            "content": f"""
+Here are the three datasets.
+
+DATA_PRODUCT_USAGE_METRICS:
+{df_usage.to_csv(index=False)}
+
+COLUMN_USAGE_METRICS:
+{df_columns.to_csv(index=False)}
+
+QUERY_JOIN_PATTERNS:
+{df_joins.to_csv(index=False)}
+
+Analyze them and generate the required JSON output.
+"""
+        }
+    ]
+)
+
+--prmpt file--
+  from pathlib import Path
+
+SYSTEM_PROMPT = Path("prompts/system_prompt.txt").read_text(encoding="utf-8")
