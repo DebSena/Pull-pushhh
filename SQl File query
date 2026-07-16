@@ -87,4 +87,54 @@ GROUP BY
     Left_Table_Name,
     Right_Table_Name
 ORDER BY Total_Join_Count DESC;
+
+---------------------------------------------------------------------
+BASIC NORMALIZATION
 ---------------------------------------------------------------------------
+WITH normalized_queries AS (
+    SELECT
+        user_name,
+        TRIM(
+            REGEXP_REPLACE(
+                UPPER(SqlTextInfo),
+                '\\s+',
+                ' '
+            )
+        ) AS normalized_sql
+    FROM master_table
+)
+
+SELECT
+    normalized_sql,
+    COUNT(*) AS query_run_count
+FROM normalized_queries
+GROUP BY normalized_sql
+HAVING COUNT(*) > 1
+ORDER BY query_run_count DESC;
+
+-----------------------------------------------------------------------------
+ADVANCED NORMALIZATION
+-------------------------------------------------------------------
+WITH normalized_queries AS (
+SELECT
+    TRIM(
+        REGEXP_REPLACE(
+            REGEXP_REPLACE(
+                UPPER(SqlTextInfo),
+                '[;\t\r\n]+',
+                ' '
+            ),
+            '\\s+',
+            ' '
+        )
+    ) AS normalized_sql
+FROM master_table
+)
+
+SELECT
+    normalized_sql,
+    COUNT(*) AS duplicate_count
+FROM normalized_queries
+GROUP BY normalized_sql
+HAVING COUNT(*) > 1
+ORDER BY duplicate_count DESC;
