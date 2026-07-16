@@ -1,0 +1,90 @@
+HIGHEST CROSS TABLE JOIN COUNT
+----------------------------------------------------
+SELECT
+    Left_Table_Name,
+    Right_Table_Name,
+    SUM(Join_Count) AS Total_Cross_Table_Joins
+FROM QUERY_JOIN_PATTERN
+WHERE
+(
+    Left_Table_Name IN (
+        'CLM_LN_PHRM_MV',
+        'CLM_LN_PHRM_EXT_MV',
+        'CLM_LN_PHRM_RJCT_MV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_EXT_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL_EXT',
+        'CLM_SAVE_OPPOR_KPI_INCRMTL'
+    )
+    AND Right_Table_Name NOT IN (
+        'CLM_LN_PHRM_MV',
+        'CLM_LN_PHRM_EXT_MV',
+        'CLM_LN_PHRM_RJCT_MV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_EXT_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL_EXT',
+        'CLM_SAVE_OPPOR_KPI_INCRMTL'
+    )
+)
+OR
+(
+    Right_Table_Name IN (
+        'CLM_LN_PHRM_MV',
+        'CLM_LN_PHRM_EXT_MV',
+        'CLM_LN_PHRM_RJCT_MV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_EXT_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL_EXT',
+        'CLM_SAVE_OPPOR_KPI_INCRMTL'
+    )
+    AND Left_Table_Name NOT IN (
+        'CLM_LN_PHRM_MV',
+        'CLM_LN_PHRM_EXT_MV',
+        'CLM_LN_PHRM_RJCT_MV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_EXT_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL_EXT',
+        'CLM_SAVE_OPPOR_KPI_INCRMTL'
+    )
+)
+GROUP BY
+    Left_Table_Name,
+    Right_Table_Name
+ORDER BY Total_Cross_Table_Joins DESC;
+
+--------------------------------------------------------------------------
+
+DUPLICATE RECORDS
+-------------------------------------------------------------------------
+SELECT
+    Left_Table_Name,
+    Right_Table_Name,
+    Join_Type,
+    Join_Keys,
+    COUNT(*) AS Duplicate_Count
+FROM QUERY_JOIN_PATTERN
+GROUP BY
+    Left_Table_Name,
+    Right_Table_Name,
+    Join_Type,
+    Join_Keys
+HAVING COUNT(*) > 1
+ORDER BY Duplicate_Count DESC;
+-------------------------------------------------------------------------
+
+MOST COMMON JOINS
+------------------------------------------------------------------------
+SELECT
+    Left_Table_Name,
+    Right_Table_Name,
+    SUM(Join_Count) AS Total_Join_Count
+FROM QUERY_JOIN_PATTERN
+GROUP BY
+    Left_Table_Name,
+    Right_Table_Name
+ORDER BY Total_Join_Count DESC;
+---------------------------------------------------------------------------
