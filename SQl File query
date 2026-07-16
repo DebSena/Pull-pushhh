@@ -138,3 +138,66 @@ FROM normalized_queries
 GROUP BY normalized_sql
 HAVING COUNT(*) > 1
 ORDER BY duplicate_count DESC;
+
+--------------------------------------------------------------------------
+WITH normalized_queries AS (
+    SELECT
+        Tbl_nm,
+        TRIM(
+            REGEXP_REPLACE(
+                UPPER(SqlTextInfo),
+                '\\s+',
+                ' '
+            )
+        ) AS normalized_sql
+    FROM master_table
+    WHERE Tbl_nm IN (
+        'CLM_LN_PHRM_MV',
+        'CLM_LN_PHRM_EXT_MV',
+        'CLM_LN_PHRM_RJCT_MV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_EXT_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL_EXT',
+        'CLM_SAVE_OPPOR_KPI_INCRMTL'
+    )
+)
+
+SELECT
+    Tbl_nm,
+    normalized_sql,
+    COUNT(*) AS duplicate_query_count
+FROM normalized_queries
+GROUP BY
+    Tbl_nm,
+    normalized_sql
+HAVING COUNT(*) > 1
+ORDER BY
+    Tbl_nm,
+    duplicate_query_count DESC;
+
+--------------------------------------------------------------------------
+
+WITH normalized_queries AS (
+    SELECT
+        Tbl_nm,
+        TRIM(REGEXP_REPLACE(UPPER(SqlTextInfo), '\\s+', ' ')) AS normalized_sql
+    FROM master_table
+),
+
+query_counts AS (
+    SELECT
+        Tbl_nm,
+        normalized_sql,
+        COUNT(*) AS cnt
+    FROM normalized_queries
+    GROUP BY Tbl_nm, normalized_sql
+)
+
+SELECT
+    Tbl_nm,
+    SUM(cnt - 1) AS total_duplicate_queries
+FROM query_counts
+WHERE cnt > 1
+GROUP BY Tbl_nm
+ORDER BY total_duplicate_queries DESC;
