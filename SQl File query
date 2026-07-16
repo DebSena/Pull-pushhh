@@ -201,3 +201,47 @@ FROM query_counts
 WHERE cnt > 1
 GROUP BY Tbl_nm
 ORDER BY total_duplicate_queries DESC;
+----------------------------------------------------------------------------
+WITH normalized_queries AS (
+    SELECT
+        *,
+        TRIM(
+            REGEXP_REPLACE(
+                UPPER(SqlTextInfo),
+                '\\s+',
+                ' '
+            )
+        ) AS normalized_sql
+    FROM master_table
+    WHERE Tbl_nm IN (
+        'CLM_LN_PHRM_MV',
+        'CLM_LN_PHRM_EXT_MV',
+        'CLM_LN_PHRM_RJCT_MV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_EXT_SV',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL',
+        'CLM_LN_PHRM_TRNSCTN_REIMB_INCRMTL_EXT',
+        'CLM_SAVE_OPPOR_KPI_INCRMTL'
+    )
+),
+
+top_duplicate AS (
+    SELECT
+        Tbl_nm,
+        normalized_sql,
+        COUNT(*) AS duplicate_count
+    FROM normalized_queries
+    GROUP BY
+        Tbl_nm,
+        normalized_sql
+    ORDER BY duplicate_count DESC
+    LIMIT 1
+)
+
+SELECT
+    nq.*
+FROM normalized_queries nq
+JOIN top_duplicate td
+ON nq.Tbl_nm = td.Tbl_nm
+AND nq.normalized_sql = td.normalized_sql
+ORDER BY nq.LogDate, nq.StartTime;
