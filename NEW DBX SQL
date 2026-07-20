@@ -34,3 +34,31 @@ WHERE duplicate_count = (
     FROM query_counts
 )
 ORDER BY LogDate, StartTime;
+----------------------------------------------------------
+WITH normalized_queries AS (
+    SELECT
+        TRIM(
+            REGEXP_REPLACE(
+                REGEXP_REPLACE(
+                    REGEXP_REPLACE(
+                        UPPER(SqlTextInfo),
+                        '/\\*.*?\\*/',
+                        ''
+                    ),
+                    '--.*',
+                    ''
+                ),
+                '\\s+',
+                ' '
+            )
+        ) AS normalized_sql
+    FROM master_table
+    WHERE UPPER(Source) = 'DATABRICKS'
+)
+
+SELECT
+    normalized_sql,
+    COUNT(*) AS duplicate_count
+FROM normalized_queries
+GROUP BY normalized_sql
+ORDER BY duplicate_count DESC;
