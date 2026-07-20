@@ -1,63 +1,36 @@
 WITH normalized_queries AS (
     SELECT
-        user_name,
-        SqlTextInfo,
-        LogDate,
-        StartTime,
-        LastResponseTime,
-        ExecutionTime,
-        Source,
-
+        *,
         TRIM(
             REGEXP_REPLACE(
                 REGEXP_REPLACE(
                     REGEXP_REPLACE(
                         UPPER(SqlTextInfo),
-
-                        '/\\*.*?\\*/',      -- Remove block comments
+                        '/\\*.*?\\*/',
                         ''
                     ),
-
-                    '--.*',               -- Remove single-line comments
+                    '--.*',
                     ''
                 ),
-
-                '\\s+',                  -- Replace multiple whitespace with one space
+                '\\s+',
                 ' '
             )
         ) AS normalized_sql
-
     FROM master_table
     WHERE UPPER(Source) = 'DATABRICKS'
 ),
 
-duplicate_queries AS (
+query_counts AS (
     SELECT
-        normalized_sql,
-        COUNT(*) AS duplicate_count
+        *,
+        COUNT(*) OVER (PARTITION BY normalized_sql) AS duplicate_count
     FROM normalized_queries
-    GROUP BY normalized_sql
-),
-
-top_duplicate AS (
-    SELECT *
-    FROM duplicate_queries
-    ORDER BY duplicate_count DESC
-    LIMIT 1
 )
 
-SELECT
-    nq.user_name,
-    nq.SqlTextInfo,
-    nq.LogDate,
-    nq.StartTime,
-    nq.LastResponseTime,
-    nq.ExecutionTime,
-    nq.Source,
-    td.duplicate_count
-FROM normalized_queries nq
-JOIN top_duplicate td
-    ON nq.normalized_sql = td.normalized_sql
-ORDER BY
-    nq.LogDate,
-    nq.StartTime;
+SELECT *
+FROM query_counts
+WHERE duplicate_count = (
+    SELECT MAX(duplicate_count)
+    FROM query_counts
+)
+ORDER BY LogDate, StartTime;
